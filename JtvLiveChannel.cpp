@@ -289,98 +289,63 @@ void JtvLiveChannel::parseXml(const QByteArray &raw_datas)
                 QDomElement t = stream.toElement();
                 logMessage(QString("Found <%1> node ...").arg(t.tagName()));
                 live_stream.tag_name = t.tagName();
+                live_stream.swf = qs_player_url;
+                live_stream.web = QString(qs_http_referer).append(qs_channel_name);
                 QDomNode n;
-                //Creating display_name : tagname + <video_height>
+                //Optional stats
                 n = t.elementsByTagName("video_height").item(0);
+                live_stream.height = (n.isNull()) ? QString("unknown") : n.toElement().text().trimmed();
+                n = t.elementsByTagName("bitrate").item(0);
+                live_stream.bitrate = (n.isNull()) ? QString("unknown") : n.toElement().text().trimmed();
+                n = t.elementsByTagName("broadcast_part").item(0);
+                live_stream.part = (n.isNull()) ? QString("unknown") : n.toElement().text().trimmed();
+                n = t.elementsByTagName("broadcast_id").item(0);
+                live_stream.id = (n.isNull()) ? QString("unknown") : n.toElement().text().trimmed();
+                n = t.elementsByTagName("viewer_count").item(0);
+                live_stream.viewers = (n.isNull()) ? QString("unknown") : n.toElement().text().trimmed();
+
+                //Creating rtmp_url : <connect> + <play>
+                n = t.elementsByTagName("connect").item(0);
                 if(!n.isNull())
                 {
-                    live_stream.height = n.toElement().text().trimmed();
-                    //live_stream.display_name = QString("%1\tHeight : %2").arg(t.tagName(), n.toElement().text().trimmed());
-                    //Creating rtmp_url : <connect> + <play>
-                    n = t.elementsByTagName("connect").item(0);
+                    QString v = n.toElement().text().trimmed();
+                    n = t.elementsByTagName("play").item(0);
                     if(!n.isNull())
                     {
-                        QString v = n.toElement().text().trimmed();
-                        n = t.elementsByTagName("play").item(0);
+                        live_stream.rtmp_url = v.append("/").append(n.toElement().text().trimmed());
+
+                        //<node> -> server_type
+                        n = t.elementsByTagName("node").item(0);
                         if(!n.isNull())
                         {
-                            live_stream.rtmp_url = v.append("/").append(n.toElement().text().trimmed());
-                            //<token>
-                            n = t.elementsByTagName("token").item(0);
-                            if(!n.isNull())
+                            QString v = n.toElement().text().trimmed();
+                            live_stream.node = v;
+                            if(v.toLower() == "akamai")
                             {
-                                live_stream.usher_token = n.toElement().text().trimmed();
-                                //<bitrate>
-                                n = t.elementsByTagName("bitrate").item(0);
-                                if(!n.isNull())
-                                {
-                                    live_stream.bitrate = n.toElement().text().trimmed();
-                                    //<broadcast_part>
-                                    n = t.elementsByTagName("broadcast_part").item(0);
-                                    if(!n.isNull())
-                                    {
-                                        live_stream.part = n.toElement().text().trimmed();
-                                        //<broadcast_id>
-                                        n = t.elementsByTagName("broadcast_id").item(0);
-                                        if(!n.isNull())
-                                        {
-                                            live_stream.id = n.toElement().text().trimmed();
-                                            //<viewer_count>
-                                            //NOTE: ams01 cluster doesn't provide viewer_count [2707/2012]
-                                            n = t.elementsByTagName("viewer_count").item(0);
-                                            if(n.isNull())
-                                            {
-                                                live_stream.viewers = QString("unknown");
-                                            }
-                                            else
-                                            {
-                                                live_stream.viewers = n.toElement().text().trimmed();
-                                            }
-                                            //<node> -> server_type
-                                            n = t.elementsByTagName("node").item(0);
-                                            if(!n.isNull())
-                                            {
-                                                QString v = n.toElement().text().trimmed();
-                                                live_stream.node = v;
-                                                if(v.toLower() == "akamai")
-                                                {
-                                                    live_stream.server_type = JtvLiveStream::AkamaiServer;
-                                                    live_stream.swf_vfy = qs_player_url;
-                                                }
-                                                else
-                                                {
-                                                    live_stream.server_type = JtvLiveStream::UsherServer;
-                                                    live_stream.swf_vfy = QString();
-                                                }
-                                                live_stream.swf = qs_player_url;
-                                                live_stream.web = QString(qs_http_referer).append(qs_channel_name);
-                                                //Adding the live_stream struct in streams QList, parsing stream node finished
-                                                l_streams.append(live_stream);
-                                            }
-                                            else
-                                            {
-                                                emit channelSearchError("8");
-                                            }
+                                live_stream.server_type = JtvLiveStream::AkamaiServer;
+                                live_stream.swf_vfy = qs_player_url;
 
-                                        }
-                                        else
-                                        {
-                                            emit channelSearchError("7");
-                                        }
-                                    }
-                                    else
-                                    {
-                                        emit channelSearchError("6");
-                                    }
-                                }
-                                else
-                                {
-                                    emit channelSearchError("5");
-                                }
+                                //Adding the live_stream struct in streams QList, parsing stream node finished
+                                l_streams.append(live_stream);
                             }
                             else
                             {
-                                emit channelSearchError("4");
+                                live_stream.server_type = JtvLiveStream::UsherServer;
+                                live_stream.swf_vfy = QString();
+
+                                //<token>
+                                n = t.elementsByTagName("token").item(0);
+                                if(!n.isNull())
+                                {
+                                    live_stream.usher_token = n.toElement().text().trimmed();
+
+                                    //Adding the live_stream struct in streams QList, parsing stream node finished
+                                    l_streams.append(live_stream);
+                                }
+                                else
+                                {
+                                    emit channelSearchError("4");
+                                }
                             }
                         }
                         else
