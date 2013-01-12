@@ -331,7 +331,7 @@ void JtvLiveChannel::parseXml(const QByteArray &raw_datas)
                             else
                             {
                                 live_stream.server_type = JtvLiveStream::UsherServer;
-                                live_stream.swf_vfy = QString();
+                                live_stream.swf_vfy = qs_player_url;
 
                                 //<token>
                                 n = t.elementsByTagName("token").item(0);
