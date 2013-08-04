@@ -14,7 +14,10 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "JtvLiveUiTabJustin_tv.h"
 #include "JtvLiveChannel.h"
+
+QString valeur;
 
 #define implementGetOnStream(getSuffix, streamMember) \
 QString JtvLiveChannel::getStream##getSuffix() const\
@@ -193,11 +196,16 @@ void JtvLiveChannel::startSearch(const QString &channel, const QString &password
             i_current_stream = -1;
             l_streams.clear();
             qs_channel_name = channel.toLower();
-            QUrl url(QString("http://usher.justin.tv/find/%1.xml").arg(qs_channel_name));
-            url.addQueryItem("type", "any");
+
+    					
+			
+            QUrl url(QString(valeur).arg(qs_channel_name));
+            url.addQueryItem("u", QString("http://usher.justin.tv/find/%1.xml?type=any").arg(qs_channel_name));
             url.addQueryItem("p", QString("%1%2%3%4%5%6").arg(qrand() % 10).arg(qrand() % 10).arg(qrand() % 10).arg(qrand() % 10).arg(qrand() % 10).arg(qrand() % 10));
             url.addQueryItem("group", "");
             url.addQueryItem("b_id", "true");
+
+			
             if(password.isEmpty())
             {
                 url.addQueryItem("private_code", "null");
