@@ -34,6 +34,9 @@
 #include <QDomElement>
 #include <QDomNode>
 
+
+extern QString valeur;
+
 class JtvLiveStream
 {
 public:
